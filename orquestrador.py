@@ -1,4 +1,6 @@
-from utils import get_config, cria_socket, aguarda_mensagem, envia
+import sys
+
+from utils import get_config, cria_socket_multicast, aguarda_mensagem, envia
 
 config = get_config()
 codigo_mensagens = config['codigo_mensagens']
@@ -6,10 +8,14 @@ codigos_orquestrador = codigo_mensagens['orquestrador']
 codigos_cliente = codigo_mensagens['cliente']
 codigos_servidor = codigo_mensagens['servidor']
 
-sock = cria_socket()
+ip_multicast, porta_multicast = sys.argv[1].split(':')
+porta_multicast = int(porta_multicast)
+grupo_multicast = (ip_multicast, porta_multicast)
+
+sock = cria_socket_multicast(ip_multicast, porta_multicast)
 
 def envia_configuracoes(comando):
-    envia(sock, codigos_orquestrador['comecar']+comando)
+    envia(sock, codigos_orquestrador['comecar']+comando, grupo_multicast)
 
 def espera_cliente_e_servidor_comecarem():
     for i in range(2):
@@ -26,7 +32,7 @@ def espera_cliente_e_servidor_terminarem():
         ))
 
 def encerra_cliente_e_servidor():
-    envia(sock, codigos_orquestrador['shutdown'])
+    envia(sock, codigos_orquestrador['shutdown'], grupo_multicast)
 
 def principal():
     comando = '23' # tamanho_mensagem, repeticoes

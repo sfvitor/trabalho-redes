@@ -1,7 +1,7 @@
 import socket
 import sys
 
-from utils import get_config, cria_socket, aguarda_mensagem, envia
+from utils import get_config, cria_socket_multicast, aguarda_mensagem, envia
 
 config = get_config()
 codigo_mensagens = config['codigo_mensagens']
@@ -9,9 +9,13 @@ codigos_orquestrador = codigo_mensagens['orquestrador']
 codigos_cliente = codigo_mensagens['cliente']
 codigos_servidor = codigo_mensagens['servidor']
 
-sock = cria_socket()
+ip_multicast, porta_multicast = sys.argv[1].split(':')
+porta_multicast = int(porta_multicast)
+grupo_multicast = (ip_multicast, porta_multicast)
+ip_tcp, porta_tcp = sys.argv[2].split(':')
+porta_tcp = int(porta_tcp)
 
-ipServidor = sys.argv[1]
+sock = cria_socket_multicast(ip_multicast, porta_multicast)
 
 def espera_orquestrador():
     codigo, mensagem = aguarda_mensagem(sock, (
@@ -37,21 +41,21 @@ def comeca_teste(opcoes, sockCliente):
         # salva tempo
 
 def termina_teste():
-    envia(sock, codigos_cliente['terminar'])
+    envia(sock, codigos_cliente['terminar'], grupo_multicast)
 
 def novo_socket_tcp():
     sockCliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sockCliente.connect((ipServidor, config['tcp']['porta']))
+    sockCliente.connect((ip_tcp, porta_tcp))
     return sockCliente
 
 while True:
     print 'Cliente aguardando orquestrador para comecar novo teste...'
     opcoes = espera_orquestrador()
     if not opcoes:
-        envia(sock, codigos_cliente['terminar'])
+        envia(sock, codigos_cliente['terminar'], grupo_multicast)
         print 'Orquestrador encerrou os testes. Fechando conexao...'
         break
-    envia(sock, codigos_cliente['comecar'])
+    envia(sock, codigos_cliente['comecar'], grupo_multicast)
     print 'opcoes recebidas:', opcoes
     espera_servidor()
     sockCliente = novo_socket_tcp()

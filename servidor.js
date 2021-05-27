@@ -4,21 +4,20 @@ const {
     cliente: codigosCliente,
     servidor: codigosServidor,
 } = config.codigo_mensagens;
-const {
-    ip_grupo: ipMultiGrupo,
-    porta: portaMulticast,
-} = config.multicast;
 
 const dgram = require('dgram');
 const net = require('net');
 const { exit } = require('process');
 const servidorMulticast = dgram.createSocket('udp4');
 
-const host = process.argv[2];
+const [ipMulticast, portaMulticast] = process.argv[2].split(':');
+const [ipTCP, portaTCP] = process.argv[3].split(':');
+const host = '0.0.0.0';
+// const host = '192.168.0.172';
 
 servidorMulticast.on('listening', function () {
     console.log('Servidor aguardando orquestrador para comecar novo teste...');
-    servidorMulticast.addMembership(ipMultiGrupo, '0.0.0.0');
+    servidorMulticast.addMembership(ipMulticast, host);
 });
 
 function separaMensagem(mensagem) {
@@ -28,7 +27,7 @@ function separaMensagem(mensagem) {
 }
 
 function envia(mensagem) {
-    servidorMulticast.send(mensagem, 0, mensagem.length, portaMulticast, ipMultiGrupo);
+    servidorMulticast.send(mensagem, 0, mensagem.length, parseInt(portaMulticast), ipMulticast);
 }
 
 let tamanhoMensagem, repeticoes;
@@ -62,7 +61,7 @@ servidorMulticast.on('message', function (mensagemRemota) {
     }
 });
 
-servidorMulticast.bind(portaMulticast, '0.0.0.0');
+servidorMulticast.bind(parseInt(portaMulticast), host);
 
 const servidorTCP = net.createServer(function (socket) {
     socket.addListener('data', function (data) {
@@ -78,4 +77,4 @@ const servidorTCP = net.createServer(function (socket) {
     });
 });
 
-servidorTCP.listen(config.tcp.porta, host);
+servidorTCP.listen(parseInt(portaTCP), ipTCP);

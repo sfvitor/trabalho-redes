@@ -8,12 +8,7 @@ def get_config():
         json_data = json.load(f)
     return json_data
 
-multi = get_config()['multicast']
-ip_grupo = str(multi['ip_grupo'])
-porta = multi['porta']
-grupo_multicast = (ip_grupo, porta)
-
-def cria_socket():
+def cria_socket_multicast(ip_grupo, porta):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     ttl = struct.pack('b', 1)
     sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
@@ -30,5 +25,5 @@ def aguarda_mensagem(sock, codigos):
         if mensagem[0:2] in codigos:
             return mensagem[0:2], mensagem[2:]
 
-def envia(sock, mensagem):
+def envia(sock, mensagem, grupo_multicast):
     sock.sendto(mensagem, grupo_multicast)

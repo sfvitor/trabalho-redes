@@ -20,10 +20,11 @@
         }
     },
     "multicast": {
-        "ip_grupo": "230.0.0.26",
-        "porta": 9926
+        "ip_grupo": "230.0.0.xx",
+        "porta": "99xx"
     },
     "tcp": {
-        "porta": 8826
+        "ip": "10.0.10.xx",
+        "porta": "88xx"
     }
 }
