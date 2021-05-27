@@ -18,7 +18,7 @@ const host = process.argv[2];
 
 servidorMulticast.on('listening', function () {
     console.log('Servidor aguardando orquestrador para comecar novo teste...');
-    servidorMulticast.addMembership(ipMultiGrupo, host);
+    servidorMulticast.addMembership(ipMultiGrupo, '0.0.0.0');
 });
 
 function separaMensagem(mensagem) {
@@ -62,7 +62,7 @@ servidorMulticast.on('message', function (mensagemRemota) {
     }
 });
 
-servidorMulticast.bind(portaMulticast, host);
+servidorMulticast.bind(portaMulticast, '0.0.0.0');
 
 const servidorTCP = net.createServer(function (socket) {
     socket.addListener('data', function (data) {
