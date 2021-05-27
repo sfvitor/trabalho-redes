@@ -1,0 +1,29 @@
+{
+    "codigo_mensagens": {
+        "orquestrador": {
+            "comecar": "00",
+            "shutdown": "10",
+            "terminar": "20",
+            "teste": "30"
+        },
+        "cliente": {
+            "comecar": "01",
+            "shutdown": "11",
+            "terminar": "21",
+            "teste": "31"
+        },
+        "servidor": {
+            "comecar": "02",
+            "shutdown": "12",
+            "terminar": "22",
+            "teste": "32"
+        }
+    },
+    "multicast": {
+        "ip_grupo": "230.0.0.26",
+        "porta": 9926
+    },
+    "tcp": {
+        "porta": 8826
+    }
+}
