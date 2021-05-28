@@ -35,29 +35,30 @@ def encerra_cliente_e_servidor():
     envia(sock, codigos_orquestrador['shutdown'], grupo_multicast)
 
 def principal():
-    comando = '23' # tamanho_mensagem, repeticoes
+    repeticoes = int(raw_input('Digite a quantidade de repeticoes:'))
 
     while True:
-        print 'Enviando configuracoes para novo teste...'
-        envia_configuracoes(comando)
-        espera_cliente_e_servidor_comecarem()
-        print 'Aguardando testes terminarem...'
-        espera_cliente_e_servidor_terminarem()
-
-        print 'Digite novas configuracoes (tamanho da mensagem e quantidade de repeticoes)'
+        comando = ''
+        print 'Digite o tamanho da mensagem'
         print 'Ou digite shutdown para encerrar o cliente e o servidor'
-
         while True:
             comando = raw_input()
             if comando == 'shutdown':
                 encerra_cliente_e_servidor()
                 return
             try:
-                tamanho_mensagem = int(comando[0])
-                repeticoes = int(comando[1])
+                tamanho_mensagem = int(comando)
+                comando = '%d%d'%(tamanho_mensagem, repeticoes)
                 break
             except:
                 print 'Valores incorretos, tente novamente'
+        print 'Enviando configuracoes para novo teste...'
+        envia_configuracoes(comando)
+        espera_cliente_e_servidor_comecarem()
+        print 'Aguardando testes terminarem...'
+        espera_cliente_e_servidor_terminarem()
+
+        
 
 principal()
 sock.close()

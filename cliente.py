@@ -1,5 +1,6 @@
 import socket
 import sys
+import time
 
 from utils import get_config, cria_socket_multicast, aguarda_mensagem, envia
 
@@ -30,15 +31,18 @@ def espera_servidor():
 def comeca_teste(opcoes, sockCliente):
     tamanho_mensagem = 2**int(opcoes[0])
     repeticoes = 2**int(opcoes[1])
+    tempos = []
     for i in range(repeticoes):
         print 'Testando repeticao %d/%d'%(i+1, repeticoes)
-        # inicia timer
         mensagem = 'a'*tamanho_mensagem
+        # inicia timer
+        inicio = time.time()
         sockCliente.send(codigos_cliente['teste'] + mensagem)
         retorno = sockCliente.recv(tamanho_mensagem+2)
         # finaliza timer
+        tempos.append((time.time() - inicio)*1000)
         print 'Servidor respondeu: %s'%retorno[2:]
-        # salva tempo
+    return tempos
 
 def termina_teste():
     envia(sock, codigos_cliente['terminar'], grupo_multicast)
@@ -47,6 +51,12 @@ def novo_socket_tcp():
     sockCliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sockCliente.connect((ip_tcp, porta_tcp))
     return sockCliente
+
+def calcula_desvio(media, tempos):
+    return (sum([(t-media)**2 for t in tempos])/len(tempos))**0.5
+
+grafico = {}
+repeticoes = 0
 
 while True:
     print 'Cliente aguardando orquestrador para comecar novo teste...'
@@ -57,11 +67,30 @@ while True:
         break
     envia(sock, codigos_cliente['comecar'], grupo_multicast)
     print 'opcoes recebidas:', opcoes
+    repeticoes = 2**int(opcoes[1])
     espera_servidor()
     sockCliente = novo_socket_tcp()
     print 'recebido ack do servidor'
-    comeca_teste(opcoes, sockCliente)
+    tempos = comeca_teste(opcoes, sockCliente)
+    media = sum(tempos)/len(tempos)
+    desvio = calcula_desvio(media, tempos)
+    grafico[2**int(opcoes[0])] = {
+        'media': media,
+        'desvio': desvio
+    }
     sockCliente.close()
     termina_teste()
 
 sock.close()
+
+grafico_keys = sorted(grafico.keys())
+linha_tamanhos = 'TCP/1  ' + ' '.join(['%10s'%('%d'%k) for k in grafico_keys])
+linha_medias =   'MED    ' + ' '.join(['%10s'%('%.4f'%grafico[k]['media']) for k in grafico_keys])
+linha_desvios =  'DVP    ' + ' '.join(['%10s'%('%.4f'%grafico[k]['desvio']) for k in grafico_keys])
+
+with open('resultados.txt', 'w') as f:
+    f.write('Observacao: medias e desvios em milissegundos\n')
+    f.write('Repeticoes: %d\n'%repeticoes)
+    f.write('%s\n'%linha_tamanhos)
+    f.write('%s\n'%linha_medias)
+    f.write(linha_desvios)
