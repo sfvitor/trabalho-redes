@@ -1,22 +1,22 @@
 {
     "codigo_mensagens": {
         "orquestrador": {
-            "comecar": "00",
-            "shutdown": "10",
-            "terminar": "20",
-            "teste": "30"
+            "comecar": [ 0, 0 ],
+            "shutdown": [ 1, 0 ],
+            "terminar": [ 2, 0 ],
+            "teste": [ 3, 0 ]
         },
         "cliente": {
-            "comecar": "01",
-            "shutdown": "11",
-            "terminar": "21",
-            "teste": "31"
+            "comecar": [ 0, 1 ],
+            "shutdown": [ 1, 1 ],
+            "terminar": [ 2, 1 ],
+            "teste": [ 3, 1 ]
         },
         "servidor": {
-            "comecar": "02",
-            "shutdown": "12",
-            "terminar": "22",
-            "teste": "32"
+            "comecar": [ 0, 2 ],
+            "shutdown": [ 1, 2 ],
+            "terminar": [ 2, 2 ],
+            "teste": [ 3, 2 ]
         }
     },
     "multicast": {

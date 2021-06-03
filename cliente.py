@@ -1,6 +1,7 @@
 import socket
 import sys
 import time
+import struct
 
 from utils import get_config, cria_socket_multicast, aguarda_mensagem, envia
 
@@ -20,32 +21,36 @@ sock = cria_socket_multicast(ip_multicast, porta_multicast)
 
 def espera_orquestrador():
     codigo, mensagem = aguarda_mensagem(sock, (
-        codigos_orquestrador['comecar'],
-        codigos_orquestrador['shutdown']
+        tuple(codigos_orquestrador['comecar']),
+        tuple(codigos_orquestrador['shutdown'])
     ))
-    return (codigo == codigos_orquestrador['comecar']) and mensagem
+    return (codigo == tuple(codigos_orquestrador['comecar'])) and mensagem
 
 def espera_servidor():
-    aguarda_mensagem(sock, (codigos_servidor['comecar'],))
+    aguarda_mensagem(sock, (tuple(codigos_servidor['comecar']),))
 
 def comeca_teste(opcoes, sockCliente):
-    tamanho_mensagem = 2**int(opcoes[0])
-    repeticoes = 2**int(opcoes[1])
+    tamanho_mensagem = 2**opcoes[0]
+    repeticoes = 2**opcoes[1]
     tempos = []
     for i in range(repeticoes):
         print 'Testando repeticao %d/%d'%(i+1, repeticoes)
-        mensagem = 'a'*tamanho_mensagem
+        itens_mensagem = codigos_cliente['teste'] + [1]*tamanho_mensagem
+        mensagem = struct.pack(
+            '%db'%(2+tamanho_mensagem),
+            *itens_mensagem
+        )
         # inicia timer
         inicio = time.time()
-        sockCliente.send(codigos_cliente['teste'] + mensagem)
-        retorno = sockCliente.recv(tamanho_mensagem+2)
+        sockCliente.send(mensagem)
+        retorno_byte = sockCliente.recv(2+tamanho_mensagem)
         # finaliza timer
         tempos.append((time.time() - inicio)*1000)
-        print 'Servidor respondeu: %s'%retorno[2:]
+        print 'Servidor respondeu. Tamanho:', len(retorno_byte)-2
     return tempos
 
 def termina_teste():
-    envia(sock, codigos_cliente['terminar'], grupo_multicast)
+    envia(sock, tuple(codigos_cliente['terminar']), grupo_multicast)
 
 def novo_socket_tcp():
     sockCliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -62,19 +67,19 @@ while True:
     print 'Cliente aguardando orquestrador para comecar novo teste...'
     opcoes = espera_orquestrador()
     if not opcoes:
-        envia(sock, codigos_cliente['terminar'], grupo_multicast)
+        envia(sock, tuple(codigos_cliente['terminar']), grupo_multicast)
         print 'Orquestrador encerrou os testes. Fechando conexao...'
         break
-    envia(sock, codigos_cliente['comecar'], grupo_multicast)
+    envia(sock, tuple(codigos_cliente['comecar']), grupo_multicast)
     print 'opcoes recebidas:', opcoes
-    repeticoes = 2**int(opcoes[1])
+    repeticoes = 2**opcoes[1]
     espera_servidor()
     sockCliente = novo_socket_tcp()
     print 'recebido ack do servidor'
     tempos = comeca_teste(opcoes, sockCliente)
     media = sum(tempos)/len(tempos)
     desvio = calcula_desvio(media, tempos)
-    grafico[2**int(opcoes[0])] = {
+    grafico[2**opcoes[0]] = {
         'media': media,
         'desvio': desvio
     }

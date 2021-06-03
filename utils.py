@@ -21,9 +21,11 @@ def cria_socket_multicast(ip_grupo, porta):
 
 def aguarda_mensagem(sock, codigos):
     while True:
-        mensagem, endereco = sock.recvfrom(1024)
+        mensagem_byte, endereco = sock.recvfrom(4)
+        mensagem = struct.unpack('%db'%len(mensagem_byte), mensagem_byte)
         if mensagem[0:2] in codigos:
             return mensagem[0:2], mensagem[2:]
 
-def envia(sock, mensagem, grupo_multicast):
+def envia(sock, itens_mensagem, grupo_multicast):
+    mensagem = struct.pack('%db'%len(itens_mensagem), *itens_mensagem)
     sock.sendto(mensagem, grupo_multicast)

@@ -14,21 +14,25 @@ grupo_multicast = (ip_multicast, porta_multicast)
 
 sock = cria_socket_multicast(ip_multicast, porta_multicast)
 
-def envia_configuracoes(comando):
-    envia(sock, codigos_orquestrador['comecar']+comando, grupo_multicast)
+def envia_configuracoes(tamanho_mensagem, repeticoes):
+    itens_mensagem = codigos_orquestrador['comecar'] + [
+        tamanho_mensagem,
+        repeticoes
+    ]
+    envia(sock, itens_mensagem, grupo_multicast)
 
 def espera_cliente_e_servidor_comecarem():
     for i in range(2):
         aguarda_mensagem(sock, (
-            codigos_cliente['comecar'],
-            codigos_servidor['comecar']
+            tuple(codigos_cliente['comecar']),
+            tuple(codigos_servidor['comecar'])
         ))
 
 def espera_cliente_e_servidor_terminarem():
     for i in range(2):
         aguarda_mensagem(sock, (
-            codigos_cliente['terminar'],
-            codigos_servidor['terminar']
+            tuple(codigos_cliente['terminar']),
+            tuple(codigos_servidor['terminar'])
         ))
 
 def encerra_cliente_e_servidor():
@@ -38,7 +42,7 @@ def principal():
     repeticoes = int(raw_input('Digite a quantidade de repeticoes:'))
 
     while True:
-        comando = ''
+        tamanho_mensagem = 0
         print 'Digite o tamanho da mensagem'
         print 'Ou digite shutdown para encerrar o cliente e o servidor'
         while True:
@@ -48,17 +52,14 @@ def principal():
                 return
             try:
                 tamanho_mensagem = int(comando)
-                comando = '%d%d'%(tamanho_mensagem, repeticoes)
                 break
             except:
                 print 'Valores incorretos, tente novamente'
         print 'Enviando configuracoes para novo teste...'
-        envia_configuracoes(comando)
+        envia_configuracoes(tamanho_mensagem, repeticoes)
         espera_cliente_e_servidor_comecarem()
         print 'Aguardando testes terminarem...'
         espera_cliente_e_servidor_terminarem()
-
-        
 
 principal()
 sock.close()
