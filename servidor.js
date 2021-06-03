@@ -22,10 +22,13 @@ servidorMulticast.on('listening', function () {
     servidorMulticast.addMembership(ipMulticast, host);
 });
 
-function separaMensagem(mensagem) {
-    const data = Buffer.from(mensagem).toJSON().data;
-    const codigo = data.slice(0, 2);
-    const opcoes = data.slice(2);
+function pegaItensMensagem(mensagem) {
+    return Buffer.from(mensagem).toJSON().data;
+}
+
+function separaMensagem(itensMensagem) {
+    const codigo = itensMensagem.slice(0, 2);
+    const opcoes = itensMensagem.slice(2);
     return [codigo, opcoes];
 }
 
@@ -37,7 +40,7 @@ function envia(itensMensagem) {
 let tamanhoMensagem, repeticoes, clienteTerminou;
 
 servidorMulticast.on('message', function (mensagemRemota) {   
-    const [codigo, mensagem] = separaMensagem(mensagemRemota);
+    const [codigo, mensagem] = separaMensagem(pegaItensMensagem(mensagemRemota));
     if (codigo.toString() === codigosOrquestrador.comecar.toString()) {
         clienteTerminou = false;
         tamanhoMensagem = 2**mensagem[0];
@@ -60,11 +63,25 @@ servidorMulticast.on('message', function (mensagemRemota) {
 
 servidorMulticast.bind(parseInt(portaMulticast), host);
 
+let mensagemCompleta = [];
+
 const servidorTCP = net.createServer(function (socket) {
     socket.addListener('data', function (data) {
-        const [codigo, mensagem] = separaMensagem(data);
-        console.log(`recebida mensagem de teste. Tamanho: ${mensagem.length}`);
-        const itensResposta = codigosServidor.teste.concat(mensagem);
+        const itensMensagem = pegaItensMensagem(data);
+        if (mensagemCompleta.length > 0) {
+            mensagemCompleta = mensagemCompleta.concat(itensMensagem);
+            if (mensagemCompleta.length < tamanhoMensagem) {
+                return;
+            }
+        }
+        else {
+            [_, mensagemCompleta] = separaMensagem(itensMensagem);
+            if (mensagemCompleta.length < tamanhoMensagem) {
+                return;
+            }
+        }
+        console.log(`recebida mensagem de teste. Tamanho: ${mensagemCompleta.length}`);
+        const itensResposta = codigosServidor.teste.concat(mensagemCompleta);
         socket.write(Buffer.from(itensResposta).toString());
         console.log(`feito o echo da mensagem`);
         repeticoes--;
@@ -74,9 +91,10 @@ const servidorTCP = net.createServer(function (socket) {
             console.log('enviado ack de termino');
             // console.log('esperando cliente terminar');
             // while (!clienteTerminou) {}
-            socket.end();
+            // socket.end();
             console.log(mensagemServidorEsperando);
         }
+        mensagemCompleta = [];
     });
 });
 
