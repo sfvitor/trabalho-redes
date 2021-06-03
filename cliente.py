@@ -43,7 +43,10 @@ def comeca_teste(opcoes, sockCliente):
         # inicia timer
         inicio = time.time()
         sockCliente.send(mensagem)
-        retorno_byte = sockCliente.recv(2+tamanho_mensagem)
+        retorno_byte = ''
+        while len(retorno_byte)-2 < tamanho_mensagem:
+            tamanho_retorno = 2+tamanho_mensagem-len(retorno_byte)
+            retorno_byte += sockCliente.recv(tamanho_retorno)
         # finaliza timer
         tempos.append((time.time() - inicio)*1000)
         print 'Servidor respondeu. Tamanho:', len(retorno_byte)-2
